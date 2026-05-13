@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://thymeleaf.org">
+<div th:fragment="weatherSection" class="info-card">
+	<div class="weather-header">
+		<h2>📍 <span th:text="${savedCity}">枚方市</span></h2>
+		<button type="button" onclick="toggleForm('areaForm')" class="interactive-item btn-cyan">地域設定</button>
+	</div>
+
+	<div id="areaForm"
+		style="display: none; background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #ddd;">
+		<form th:action="@{/user/save-config}" method="post">
+			<input type="text" name="pref" placeholder="都道府県" th:value="${savedPref}"
+				style="width: 38%; padding: 10px;">
+			<input type="text" name="city" placeholder="市区町村" th:value="${savedCity}" style="width: 58%; padding: 10px;"
+				required>
+			<button type="submit" class="interactive-item"
+				style="width:100%; background:#00acc1; color:white; padding:10px; margin-top:10px; border:none; border-radius:5px;">保存</button>
+		</form>
+	</div>
+
+	<!-- アラート -->
+	<div th:if="${weather.alert}" style="margin-bottom: 15px;">
+		<div class="alert-box" th:styleappend="'background:' + ${weather.alertColor}" style="margin-bottom: 5px;">
+			<span th:text="${weather.alert}"></span>
+			<span style="font-size: 0.85em; font-weight: normal; margin-left: 5px;">([[${weather.pressure}]])</span>
+		</div>
+
+		<div th:if="${weather.pressure != null and weather.alert.contains('気象病')}"
+			style="font-size: 0.75em; color: #400040; background: #f3ebff; padding: 8px; border-radius: 5px; border: 1px solid #d6bcfa; text-align: left;">
+			<strong>💡 過ごし方のヒント:</strong><br>
+			気圧が下がると自律神経が乱れやすくなります。耳の周りを優しくマッサージしたり、温かい飲み物でリラックスして過ごしましょう。
+		</div>
+
+		<div th:if="${weather.alert.contains('熱中症')}"
+			style="font-size: 0.75em; color: #ff0000; background: #fff5f5; padding: 8px; border-radius: 5px; border: 1px solid #feb2b2; text-align: left; margin-top: 5px;">
+			<strong>💡 過ごし方のヒント:</strong><br>
+			気温や湿度が高くなっています。のどが渇く前にこまめに水分を補給し、涼しい室内で無理せず過ごしましょう。
+		</div>
+	</div>
+
+	<!-- 日時と気温の左右分割 -->
+	<div style="display: flex; align-items: center; justify-content: space-between; margin: 15px 0; padding: 10px 5px;">
+		<div style="flex: 1; text-align: left; border-left: 5px solid #00acc1; padding-left: 15px;">
+			<div style="font-size: 1.1em; font-weight: bold; color: #888;">
+				<span th:text="${#temporals.format(#temporals.createNow(), 'MM/dd')}">05/01</span>
+				<span th:text="'(' + ${#temporals.format(#temporals.createNow(), 'E')} + ')'">金</span>
+			</div>
+			<div style="font-size: 3.8em; font-weight: 900; color: #333; line-height: 1; margin-top: 2px;"
+				th:text="${#temporals.format(#temporals.createNow(), 'HH:mm')}">13:31</div>
+		</div>
+
+		<div style="flex: 1; display: flex; flex-direction: column; align-items: flex-end; padding-right: 10px;">
+			<div style="display: flex; align-items: flex-start; gap: 10px;">
+				<div class="weather-main-temp" style="font-size: 3.2em; margin: 0; line-height: 1; color: #00acc1;"
+					th:text="${weather.temp}">18°C</div>
+				<div style="font-size: 0.9em; font-weight: bold; padding-top: 3px; text-align: right;">
+					<div style="color: #ff5252;">▲ 最高 [[${weather.high}]]</div>
+					<div style="color: #42a5f5;">▼ 最低 [[${weather.low}]]</div>
+				</div>
+			</div>
+			<div style="font-size: 1.3em; font-weight: bold; color: #555; margin-top: 8px;"
+				th:text="${weather.weather}">晴れ ☀️</div>
+		</div>
+	</div>
+
+	<!-- チップ -->
+	<div class="weather-chips">
+		<span class="chip chip-feels">👕 体感 [[${weather.feelsLike}]]</span>
+		<span class="chip chip-wind">🌬️ 風 [[${weather.windSpeed}]]</span>
+		<span class="chip chip-cloud">🌥️ 雲 [[${weather.clouds}]]</span>
+	</div>
+
+	<!-- アドバイス -->
+	<div
+		style="margin-top: 10px; font-size: 0.8em; color: #555; background: rgba(255,255,255,0.6); padding: 12px; border-radius: 8px; border: 1px solid #e0f7fa; text-align: left; line-height: 1.5;">
+		<div style="margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed #ddd;">
+			<strong>👕 服装の目安</strong><br>
+			<span th:if="${weather.feelsLikeNum >= 20}">半袖や薄手の長袖で快適に過ごせそうです。</span>
+			<span th:if="${weather.feelsLikeNum >= 15 and weather.feelsLikeNum < 20}">薄手の上着が欲しくなる温度です。</span>
+			<span
+				th:if="${weather.feelsLikeNum >= 10 and weather.feelsLikeNum < 15}">かなり肌寒いです。厚手のニットやコートを準備しましょう。</span>
+			<span th:if="${weather.feelsLikeNum < 10}">真冬の寒さです。マフラーや手袋などで防寒してください。</span>
+		</div>
+
+		<div>
+			<strong>🌬️ 風の強さの目安</strong><br>
+			<span th:if="${weather.windSpeedNum >= 15}" style="color: #e53e3e; font-weight: bold;">⚠️
+				看板が外れる恐れがあり、外出は危険です。</span>
+			<span th:if="${weather.windSpeedNum >= 10 and weather.windSpeedNum < 15}">☂️ 傘が差しにくくなり、歩くのが大変です。</span>
+			<span th:if="${weather.windSpeedNum >= 5 and weather.windSpeedNum < 10}">🍃 木の葉が揺れ、しっかり風を感じます。</span>
+			<span th:if="${weather.windSpeedNum < 5}">✅ 穏やかな風、またはほぼ無風の状態です。</span>
+			<small style="color: #666; display: block; margin-top: 4px;">※風が 1m/s 増すごとに、体感は 1度下がると言われます。</small>
+		</div>
+	</div>
+
+	<!-- 24時間予報 -->
+	<div
+		style="display: flex; overflow-x: auto; gap: 12px; margin-top: 15px; justify-content: flex-start; padding-bottom: 5px;">
+		<div style="display: flex; margin: 0 auto; gap: 12px;">
+			<div th:each="h : ${hourlyWeather}" style="min-width: 60px; text-align: center;">
+				<div style="font-size: 0.7em; color: #888;" th:text="${h.time}"></div>
+				<div style="font-size: 1.2em; margin: 3px 0;"
+					th:text="${h.weather.contains('晴') ? '☀️' : (h.weather.contains('雨') ? '☔' : '☁️')}"></div>
+				<div style="font-weight: bold;" th:text="${h.temp}"></div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 週間予報 -->
+		<h3 style="font-size: 0.9em; color: #666; text-align: center; margin-bottom: 10px;">📅 週間予報 (12:00)</h3>
+		<div style="display: flex; justify-content: center; gap: 8px;">
+			<div th:each="w : ${weeklyWeather}"
+				style="flex: 0 1 65px; background: #fdfdfd; padding: 8px 0; border-radius: 8px; border: 1px solid #eee;">
+				<div style="font-size: 0.7em; color: #888;" th:text="${w.date}"></div>
+				<div style="font-size: 1.2em; margin: 4px 0;"
+					th:text="${w.weather.contains('晴') ? '☀️' : (w.weather.contains('雨') ? '☔' : '☁️')}"></div>
+				<div style="font-weight: bold; font-size: 0.85em;" th:text="${w.temp}"></div>
+			</div>
+		</div>
+	</div>
+	
+</div>
+
+</html>

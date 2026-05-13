@@ -1,0 +1,146 @@
+body {
+    font-family: sans-serif;
+    background: #f0fbfc;
+    margin: 0;
+    padding: 0;
+    /* ★修正：flexをやめて、標準的な中央寄せに変更 */
+    display: block; 
+    text-align: center;
+    width: 100%;
+    min-height: 100vh; /* 画面の下まで背景色を塗る */
+}
+
+body > div {
+    display: inline-block; /* 中央寄せ用 */
+    text-align: left;      /* 中身の文字は左（または指定通り）に */
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.info-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;       /* 角を少し丸くすると独立感が出ます */
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* 影をつけると「浮いている」感じに */
+    width: 100%;
+    box-sizing: border-box;
+    
+    /* 大事：他の設定と干渉しないようにマージンをリセット */
+    margin-bottom: 0 !important; 
+    display: block;
+}
+
+.weekly-container {
+    display: flex;
+    justify-content: center; /* ボックスを中央に寄せる */
+    gap: 8px;
+    margin-top: 10px;
+}
+
+h3 {
+    text-align: center;
+    width: 100%;
+}
+
+.weather-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	border-bottom: 2px solid #e6f7ff;
+}
+
+.weather-main-temp {
+	font-size: 3.5em;
+	font-weight: bold;
+	text-align: center;
+}
+
+.weather-chips {
+	display: flex;
+	justify-content: center;
+	gap: 8px;
+	font-size: 0.8em;
+}
+
+.chip {
+	padding: 4px 10px;
+	border-radius: 12px;
+	border: 1px solid;
+}
+
+.chip-feels {
+	background: #fff5f5;
+	color: #c53030;
+	border-color: #feb2b2;
+}
+
+.chip-wind {
+	background: #f0fff4;
+	color: #276749;
+	border-color: #9ae6b4;
+}
+
+.chip-cloud {
+	background: #ebf8ff;
+	color: #2b6cb0;
+	border-color: #bee3f8;
+}
+
+.alert-box {
+	padding: 8px;
+	border-radius: 8px;
+	font-weight: bold;
+	margin-bottom: 10px;
+	font-size: 0.9em;
+	text-align: center;
+	color: white;
+}
+
+.fortune-box {
+	background: #fffbe6;
+	padding: 15px;
+	border-radius: 8px;
+	border: 1px solid #ffe58f;
+}
+
+.fortune-stars {
+	font-size: 0.85em;
+	color: #666;
+	margin-bottom: 10px;
+	background: rgba(255, 255, 255, 0.5);
+	padding: 5px;
+	border-radius: 5px;
+}
+
+.btn-cyan {
+	background: #00acc1;
+	color: white;
+	border: none;
+	padding: 5px 12px;
+	border-radius: 20px;
+	font-size: 0.8em;
+	cursor: pointer;
+}
+
+.interactive-item:hover {
+	transform: scale(1.05);
+	transition: 0.2s;
+}
+
+#map {
+	height: 400px;
+	width: 100%;
+	border-radius: 15px;
+	margin-bottom: 20px;
+	border: 2px solid #00acc1;
+}
+
+/* チャットログエリアをLINE風の背景色に設定 */
+#chatLog {
+    background-color: #7494c0 !important; /* あの独特な青色 */
+    border-radius: 5px; /* 少し角を丸くして馴染ませる */
+}

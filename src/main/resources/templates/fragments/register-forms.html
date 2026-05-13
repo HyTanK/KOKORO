@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://thymeleaf.org">
+<!-- 1. 事業所・拠点登録フォーム -->
+<div th:fragment="spotRegisterForm">
+	<div class="box" style="border-left: 5px solid #ff4d4d;">
+		<h2>🏢 事業所・拠点の登録</h2>
+		<p><small style="color: #d32f2f;">※正確なピンを立てるため、建物名は下の欄に入力してください。</small></p>
+
+		<form th:action="@{/admin/add-spot}" method="post" onsubmit="return prepareSubmit()">
+			<div class="form-group">
+				<label>事業所名:</label>
+				<input type="text" id="inputPlaceName" name="name" placeholder="例：ひらかた救急センター" required>
+			</div>
+
+			<div class="form-group">
+				<label>拠点の種類:</label>
+				<select id="inputCategory" name="category"
+					style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+					<option value="sos">🚨 SOS（助けを呼ぶ・避難所など）</option>
+					<option value="hero">🦸 HERO（助けに行く・支援拠点など）</option>
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label>住所（地図検索用）:</label>
+				<div style="display: flex; gap: 10px;">
+					<input type="text" id="inputAddress" name="address" placeholder="例：枚方市大垣内町2-1-20"
+						style="flex-grow: 1;" required>
+					<button type="button" onclick="searchLocation()" class="btn-preview"
+						style="background:#666; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">地図を確認</button>
+				</div>
+			</div>
+
+			<!-- ★修正ポイント：JavaScriptが検索結果を表示するための場所を追加 -->
+			<p id="resultMsg" style="margin: 10px 0; font-weight: bold; min-height: 1.2em;"></p>
+
+			<div class="form-group">
+				<label>建物名・号室（表示用）:</label>
+				<input type="text" name="buildingName" placeholder="例：枚方ビル 3F"
+					style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+			</div>
+
+			<div class="form-group">
+				<label>説明:</label>
+				<textarea name="description" rows="2" placeholder="営業時間や活動内容など"></textarea>
+			</div>
+
+			<div class="form-group">
+				<label>IDタグ / 担当者:</label>
+				<div style="display: flex; gap: 10px;">
+					<input type="text" name="nfcAddress" placeholder="タグID" style="flex: 1;">
+					<input type="text" name="ownerName" placeholder="担当者名" style="flex: 1;">
+				</div>
+			</div>
+
+			<div id="previewMap" style="height:300px; display:none; border-radius:10px; margin-top:10px;"></div>
+
+			<input type="hidden" name="lat" id="finalLat" value="0.0">
+			<input type="hidden" name="lng" id="finalLng" value="0.0">
+
+			<button type="submit"
+				style="background:#ff4d4d; color:white; border:none; padding:15px; width:100%; border-radius:5px; font-weight:bold; cursor:pointer; margin-top:15px;">
+				🏢 事業所として登録を確定
+			</button>
+		</form>
+	</div>
+</div>
+
+<!-- 2. 個人用タグ登録フォーム -->
+<div th:fragment="privateTagForm">
+	<div class="box" style="border-left: 5px solid #00acc1; margin-top: 20px;">
+		<h2>👤 個人用NFCタグの登録（住所非公開）</h2>
+		<form th:action="@{/admin/add-nfc-only}" method="post">
+			<input type="hidden" name="category" value="private">
+			<input type="hidden" name="name" value="個人用タグ">
+			<div class="form-group">
+				<label>NFCタグID:</label>
+				<input type="text" name="nfcAddress" placeholder="タグIDを入力" required>
+			</div>
+			<div class="form-group">
+				<label>持ち主名:</label>
+				<input type="text" name="ownerName" placeholder="お名前を入力" required>
+			</div>
+			<button type="submit"
+				style="background:#00acc1; color:white; border:none; padding:12px; width:100%; border-radius:5px; font-weight:bold; cursor:pointer;">
+				💾 個人タグとして登録を確定
+			</button>
+		</form>
+	</div>
+</div>
+<!-- fragments/register-forms.html の最後の方に追加 -->
+<div class="box" style="border-left: 5px solid #805ad5; margin-top: 20px;">
+	<h2>🎵 音楽プレイヤーの設定</h2>
+	<form th:action="@{/admin/save-music}" method="post">
+		<div class="form-group">
+			<label>曲名:</label>
+			<input type="text" name="name" placeholder="例：Cheery Cakewalk" required>
+		</div>
+		<div class="form-group">
+			<label>作者:</label>
+			<input type="text" name="ownerName" placeholder="例：Kevin MacLeod" required>
+		</div>
+		<div class="form-group">
+			<label>ファイル名:</label>
+			<select name="nfcAddress" style="width: 100%; padding: 10px;">
+				<option value="BGM_146.mp3">BGM_146.mp3</option>
+				<option value="Cheery_Cakewalk.mp3">Cheery_Cakewalk.mp3</option>
+			</select>
+		</div>
+		<button type="submit"
+			style="background:#805ad5; color:white; border:none; padding:12px; width:100%; border-radius:5px; font-weight:bold;">
+			💾 音楽設定を更新
+		</button>
+	</form>
+</div>
+
+<!-- 3. 音楽プレイヤーの設定フォーム -->
+<div th:fragment="musicRegisterForm">
+    <div class="box" style="border-left: 5px solid #805ad5; margin-top: 20px;">
+        <h2>🎵 音楽プレイヤーの設定</h2>
+        <p><small style="color: #6b46c1;">※利用者画面で流れる曲名と作者名を指定できます。</small></p>
+        
+        <form th:action="@{/admin/save-music}" method="post">
+            <div class="form-group">
+                <label>表示する曲名:</label>
+                <input type="text" name="name" placeholder="例：ひらかたの朝" required>
+            </div>
+            
+            <div class="form-group">
+                <label>作者名:</label>
+                <input type="text" name="ownerName" placeholder="例：枚方 太郎" required>
+            </div>
+
+            <div class="form-group">
+                <label>再生するファイル:</label>
+                <select name="fileName" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                    <option value="/sounds/BGM_146.mp3">🎵 BGM 146 (BGM_146.mp3)</option>
+                    <option value="/sounds/Cheery_Cakewalk.mp3">🎵 Cheery Cakewalk (Cheery_Cakewalk.mp3)</option>
+                    <option value="/sounds/Cheery_Cakewalk.mp3">🎵 Crescendo Jitter (Crescendo_Jitter.mp3)</option>
+                    <option value="/sounds/Cheery_Cakewalk.mp3">🎵 Whispers in the Abyss (Whispers_in_the_Abyss.mp3)</option>
+                    <option value="/sounds/Cheery_Cakewalk.mp3">🎵 トランジズタ (トランジズタ.mp3)</option>
+                    <option value="/sounds/Cheery_Cakewalk.mp3">🎵 なでしこ (なでしこ.mp3)</option>
+                    <option value="/sounds/Cheery_Cakewalk.mp3">🎵 レモンケーキとはちみつ紅茶。 (レモンケーキとはちみつ紅茶。.mp3)</option>
+                    <option value="/sounds/Cheery_Cakewalk.mp3">🎵 雨の館Ⅲ (雨の館Ⅲ.mp3)</option>
+                    <option value="/sounds/Cheery_Cakewalk.mp3">🎵 君はハッピー (君はハッピー.mp3)</option>
+                    <option value="/sounds/Cheery_Cakewalk.mp3">🎵 在りし日の続き (在りし日の続き.mp3)</option>
+                    <option value="/sounds/Cheery_Cakewalk.mp3">🎵 碧い回路の夜明け (碧い回路の夜明け.mp3)</option>
+                </select>
+            </div>
+
+            <button type="submit" style="background:#805ad5; color:white; border:none; padding:15px; width:100%; border-radius:5px; font-weight:bold; cursor:pointer; margin-top:10px;">
+                💾 音楽設定を保存・更新
+            </button>
+        </form>
+    </div>
+</div>
+
+</html>

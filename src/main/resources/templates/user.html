@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>利用者画面 - くらし救急箱</title>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<link rel="stylesheet" th:href="@{/css/user-style.css}">
+
+	<!-- ニュースや占いを綺麗に左揃えにするための追加スタイル -->
+	<style>
+		.info-card h3 {
+			text-align: left !important;
+			margin-bottom: 12px;
+		}
+
+		.info-card ul {
+			text-align: left !important;
+		}
+
+		.fortune-box {
+			text-align: left !important;
+		}
+	</style>
+</head>
+
+<body>
+	<div style="padding: 10px; width: 100%; box-sizing: border-box; max-width: 800px; margin: 0 auto;">
+		<h1 style="text-align: center; color: #00acc1; margin-bottom: 5px;">🍀 くらし救急箱 🍀</h1>
+		<div style="display: grid; gap: 15px;"> <!-- 40px から 15px に変更 -->
+		    <div th:replace="~{fragments/weather-parts :: weatherSection}"></div>
+		    <div th:replace="~{fragments/fortune-parts :: fortuneSection}"></div>
+		    <div th:replace="~{fragments/entertainment-parts :: musicSection}"></div>
+		    <div th:replace="~{fragments/news-parts :: newsSection}"></div>
+		    <div th:replace="~{fragments/map-parts :: mapSection}"></div>
+		    <div th:replace="~{fragments/map-parts :: listSection}"></div>
+		</div>
+		
+		<!-- データの定義を先に行う -->
+		<script th:inline="javascript">var dbSpots = /*[[${spotList}]]*/[];</script>
+
+		<!-- 自作のスクリプトを読み込む -->
+		<script th:src="@{/js/user-ui.js}"></script>
+		<script th:src="@{/js/user-map.js}"></script>
+		<!-- チャットウィンドウ本体 -->
+		<div id="chatWindow"
+			style="display:none; position:fixed; bottom:20px; right:20px; width:320px; height:450px; background:white; border-radius:15px; box-shadow:0 5px 20px rgba(0,0,0,0.2); z-index:1000; flex-direction:column; overflow:hidden; border:2px solid #00acc1;">
+			<!-- ヘッダー -->
+			<div
+				style="background:#00acc1; color:white; padding:10px 15px; display:flex; justify-content:space-between; align-items:center;">
+				<strong style="font-size: 0.9em;">🤖 kokoroとチャット</strong>
+				<button onclick="toggleChat()"
+					style="background:none; border:none; color:white; cursor:pointer; font-weight:bold;">✕</button>
+			</div>
+			<!-- メッセージ表示エリア -->
+			<div id="chatLog"
+				style="flex:1; padding:15px; overflow-y:auto; background:#f0fbfc; display:flex; flex-direction:column; gap:10px; font-size:0.85em;">
+				<div
+					style="align-self:flex-start; background:white; padding:8px 12px; border-radius:15px 15px 15px 0; border:1px solid #ddd;">
+					こんにちは！kokoroだよ。何でも相談してね。</div>
+			</div>
+			<!-- 入力エリア -->
+			<div style="padding:10px; border-top:1px solid #eee; display:flex; gap:5px;">
+				<input type="text" id="chatInput" placeholder="メッセージを入力..."
+					style="flex:1; padding:8px; border-radius:20px; border:1px solid #ddd; outline:none;">
+				<button onclick="sendChatMessage()"
+					style="background:#00acc1; color:white; border:none; padding:8px 15px; border-radius:20px; cursor:pointer; font-weight:bold;">送信</button>
+			</div>
+		</div>
+
+</body>
+
+</html>

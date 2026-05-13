@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<title>管理者画面 - くらし救急箱</title>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<link rel="stylesheet" th:href="@{/css/admin-style.css}">
+</head>
+
+<body>
+    <div class="box">
+        <h1>🛠️ 管理者専用ページ</h1>
+    </div>
+    <div th:replace="~{fragments/register-forms :: spotRegisterForm}"></div>
+    <div th:replace="~{fragments/register-forms :: privateTagForm}"></div>
+    
+    <div th:replace="~{fragments/register-forms :: musicRegisterForm}"></div>
+    
+    <div th:replace="~{fragments/spot-list :: spotListSection}"></div>
+    <script th:src="@{/js/admin-map.js}"></script>
+</body>
+
+</html>

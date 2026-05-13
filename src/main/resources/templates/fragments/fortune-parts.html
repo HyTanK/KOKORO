@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://thymeleaf.org">
+<HHTHTM th:fragment="fortuneSection" class="info-card">
+	<div th:fragment="fortuneSection" class="info-card" style="margin-bottom: 20px;">
+		<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+			<h3 style="text-align: left; margin: 0; font-size: 1.1em;">✨ 今日の運勢</h3>
+			<button onclick="toggleForm('signForm')" class="btn-cyan"
+				style="padding: 4px 10px; font-size: 0.75em; border-radius: 15px; white-space: nowrap;">星座を選択</button>
+		</div>
+
+		<div id="signForm" style="display:none; margin-bottom:15px;">
+			<form th:action="@{/user/save-config}" method="post">
+				<select name="sign" style="width:100%; padding:10px; border-radius: 5px; border: 1px solid #ddd;">
+					<option th:each="s : ${ {'牡羊座','牡牛座','双子座','蟹座','獅子座','乙女座','天秤座','蠍座','射手座','山羊座','水瓶座','魚座'} }"
+						th:value="${s}" th:text="${s}" th:selected="${s == selectedSign}"></option>
+				</select>
+				<button type="submit"
+					style="width:100%; background:#ff9800; color:white; border:none; padding:10px; margin-top:5px; border-radius: 5px; cursor: pointer;">決定</button>
+			</form>
+		</div>
+
+		<div th:if="${fortune != null}" class="fortune-box"
+			style="display: flex; justify-content: space-between; align-items: center; text-align: left; overflow: hidden; position: relative;">
+			<div style="flex: 1; text-align: left; padding-right: 10px; z-index: 2;">
+				<div style="font-weight: bold; font-size: 1.1em; margin-bottom: 5px; color: #333;"
+					th:text="${fortune.sign}"></div>
+				<p th:text="${fortune.content}" style="font-weight: bold; margin: 5px 0; color: #555;"></p>
+				<div class="fortune-stars" style="text-align: left; padding: 5px 0;">
+					金運:[[${fortune.money}]] / 仕事:[[${fortune.work}]] / 恋愛:[[${fortune.love}]]
+				</div>
+				<p style="color:#ff9800; margin: 5px 0 0 0; font-weight: bold;">🍀 アイテム: [[${fortune.item}]]</p>
+			</div>
+
+			<div
+				style="font-size: 5.5em; line-height: 1; margin-right: 20px; user-select: none; z-index: 1; opacity: 0.85;">
+				<span th:if="${fortune.sign.contains('牡羊座')}">♈</span>
+				<span th:if="${fortune.sign.contains('牡牛座')}">♉</span>
+				<span th:if="${fortune.sign.contains('双子座')}">♊</span>
+				<span th:if="${fortune.sign.contains('蟹座')}">♋</span>
+				<span th:if="${fortune.sign.contains('獅子座')}">♌</span>
+				<span th:if="${fortune.sign.contains('乙女座')}">♍</span>
+				<span th:if="${fortune.sign.contains('天秤座')}">♎</span>
+				<span th:if="${fortune.sign.contains('蠍座')}">♏</span>
+				<span th:if="${fortune.sign.contains('射手座')}">♐</span>
+				<span th:if="${fortune.sign.contains('山羊座')}">♑</span>
+				<span th:if="${fortune.sign.contains('水瓶座')}">♒</span>
+				<span th:if="${fortune.sign.contains('魚座')}">♓</span>
+			</div>
+		</div>
+
+</html>

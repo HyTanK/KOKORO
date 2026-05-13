@@ -1,0 +1,86 @@
+/* admin-style.css */
+body { font-family: sans-serif; padding: 20px; background-color: #ffe6e6; }
+
+.box { 
+    background: white; 
+    padding: 20px; 
+    border-radius: 8px; 
+    margin-bottom: 20px; 
+    border: 1px solid #ddd; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+#previewMap { 
+    height: 300px; 
+    width: 100%; 
+    border-radius: 8px; 
+    margin-top: 15px; 
+    display: none; 
+}
+
+.spot-item { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 12px; 
+    border-bottom: 1px solid #eee; 
+}
+
+.btn-delete { 
+    background: #666; 
+    color: white; 
+    border: none; 
+    padding: 6px 12px; 
+    border-radius: 3px; 
+    cursor: pointer; 
+}
+
+.btn-delete:hover { background: #333; }
+
+.form-group { margin-bottom: 15px; }
+
+input[type="text"], select, textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    box-sizing: border-box; /* 枠線がはみ出さないおまじない */
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; transform: translateY(0); }
+    70% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-20px); visibility: hidden; }
+}
+
+/* 管理画面のすべてのボタンに浮き上がるエフェクトを追加 */
+button, .btn-preview, input[type="submit"] {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    cursor: pointer;
+}
+
+/* マウスが乗った時：少し大きく、影を強くする */
+button:hover, .btn-preview:hover, input[type="submit"]:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* クリックした時：少し沈ませて「押した感」を出す */
+button:active, .btn-preview:active, input[type="submit"]:active {
+    transform: translateY(-1px) scale(0.98);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 削除ボタンなど、特定のボタンもこのルールに従う */
+.btn-delete:hover {
+    background-color: #333; /* 既存の色変更と共存 */
+}
+
+/* 入力項目にフォーカスが当たった時の演出 */
+input[type="text"]:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #00acc1;
+    box-shadow: 0 0 8px rgba(0, 172, 193, 0.3);
+    background-color: #fff;
+    transition: 0.3s;
+}

@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://thymeleaf.org">
+<div th:fragment="newsSection" class="info-card" style="margin-bottom: 20px;">
+	<h3 style="text-align: left; margin-bottom: 12px;">📰 最新ニュース</h3>
+	<ul style="font-size: 0.9em; padding-left: 20px; text-align: left; list-style-position: outside;">
+		<li th:each="item : ${newsList}" style="margin-bottom: 8px; text-align: left;">
+			<a th:href="${item.link}" th:text="${item.title}" target="_blank"
+				style="color:#00796b; text-decoration:none;"></a>
+		</li>
+	</ul>
+</div>
+</body>
+
+</html>

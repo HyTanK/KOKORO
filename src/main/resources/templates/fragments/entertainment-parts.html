@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://thymeleaf.org">
+<body>
+    <div th:fragment="musicSection" class="info-card">
+        <!-- ボタンエリア -->
+        <div style="display: flex; gap: 10px;">
+            <button type="button" onclick="playMusic()" class="btn-cyan"
+                style="flex: 1; padding: 12px; font-size: 0.9em; border-radius: 10px; background: linear-gradient(135deg, #00acc1, #00838f); font-weight: bold; cursor: pointer; color: white; border: none;">🎵
+                音楽を聴く</button>
+            <button type="button" onclick="toggleChatInline()" class="btn-cyan"
+                style="flex: 1; padding: 12px; font-size: 0.9em; border-radius: 10px; background: linear-gradient(135deg, #ff9800, #f57c00); font-weight: bold; cursor: pointer; color: white; border: none;">🤖
+                kokoroと話す</button>
+        </div>
+
+        <!-- 1. 音楽プレイヤー本体 -->
+        <div id="MusicPlayer"
+            style="display: none; width: 100%; background: #f9f9f9; border-radius: 10px; border: 1px solid #ddd; margin-top: 10px; overflow: hidden;">
+            <div style="background: #00acc1; color: white; padding: 5px 10px; font-size: 0.8em; display: flex; justify-content: space-between; align-items: center;">
+                <span>🎶 音楽プレイヤー</span>
+                <button onclick="playMusic()" style="background: none; border: none; color: white; cursor: pointer; font-weight: bold;">✕</button>
+            </div>
+            <div style="padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="font-size: 0.75em; color: #ff5252; text-align: center; font-weight: bold;">⚠️ 音が出ますのでボリュームにご注意ください</div>
+                <select id="songSelect" onchange="changeSong()" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 0.85em;">
+                    <option value="" disabled selected>👇 曲を選んでください</option>
+                    <option th:each="m : ${musicList}" th:value="${m.nfcAddress}" th:data-title="${m.name}" th:data-author="${m.ownerName}" th:text="'🎵 ' + ${m.name}"></option>
+                </select>
+                <div id="songInfo" style="display: none; background: #fff; padding: 8px; border-radius: 5px; border: 1px solid #eee; font-size: 0.8em; text-align: left; line-height: 1.4;">
+                    <div>📌 <strong>タイトル:</strong> <span id="displayTitle" style="color: #333;"></span></div>
+                    <div>👤 <strong>作者:</strong> <span id="displayAuthor" style="color: #666;"></span></div>
+                </div>
+                <audio id="myAudio" controls style="width: 100%; height: 35px;"></audio>
+            </div>
+        </div>
+
+        <!-- 2. チャット画面本体 (インライン版) -->
+        <div id="chatInline" style="display: none; width: 100%; background: #f9f9f9; border-radius: 10px; border: 1px solid #ddd; margin-top: 10px; overflow: hidden; flex-direction: column;">
+            <div style="background: #ff9800; color: white; padding: 5px 10px; font-size: 0.8em; display: flex; justify-content: space-between; align-items: center;">
+                <span>🤖 kokoroチャット</span>
+                <button onclick="toggleChatInline()" style="background: none; border: none; color: white; cursor: pointer; font-weight: bold;">✕</button>
+            </div>
+			<!-- chatLog の background 指定を削除して CSS に任せる -->
+			<div id="chatLog" style="height: 300px; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 0.85em;">
+			    <div style="align-self: flex-start; background: white; padding: 6px 10px; border-radius: 12px 12px 12px 0; border: 1px solid #eee;">
+			        こんにちは！kokoroだよ。何かお話する？
+			    </div>
+			</div>
+
+            <div style="padding: 8px; border-top: 1px solid #eee; display: flex; gap: 5px; background: #fff;">
+                <input type="text" id="chatInput" placeholder="メッセージを入力..." style="flex: 1; padding: 8px; border-radius: 20px; border: 1px solid #ddd; outline: none; font-size: 0.9em;">
+                <button onclick="sendChatMessage()" style="background: #ff9800; color: white; border: none; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-weight: bold;">送信</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

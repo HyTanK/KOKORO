@@ -1,0 +1,4 @@
+2026-04-24 14:16:33.017769+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLDataException: 列 "NAME CHARACTER VARYING(255)" の値が長過ぎます: "U&'1. \\3010\\4e8b\\696d\\6240\\3011HERO\\ff08\\52a9\\3051\\306b\\884c\\304f\\62e0\\70b9\\ff09... (548)"
+Value too long for column "NAME CHARACTER VARYING(255)": "U&'1. \\3010\\4e8b\\696d\\6240\\3011HERO\\ff08\\52a9\\3051\\306b\\884c\\304f\\62e0\\70b9\\ff09... (548)"; SQL statement:
+insert into spot (address,category,description,lat,lng,name,nfc_address,owner_name,id) values (?,?,?,?,?,?,?,?,default) [22001-240]
