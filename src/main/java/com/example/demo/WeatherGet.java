@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,6 +14,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class WeatherGet {
 	private final String apiKey = "3b26363f572445b02efe7efbaf0bd6a2";
+
+	// ⚠️【追加】フリーズ防止用の共通HttpClient（接続タイムアウト5秒）
+	private final HttpClient httpClient = HttpClient.newBuilder()
+			.connectTimeout(Duration.ofSeconds(5))
+			.build();
 
 	public static class WeatherResult {
 		public String temp, weather, high, low, humidity, pressure, alert, alertColor, feelsLike, windSpeed, clouds;
@@ -28,8 +34,8 @@ public class WeatherGet {
 		WeatherResult result = new WeatherResult();
 		try {
 			String json = fetchJson("weather", city);
-			String wsStr = getValue(json, "\"speed\":", ","); // 風速の文字列を取得
-			double wsNum = Double.parseDouble(wsStr); // 数値に変換
+			String wsStr = getValue(json, "\"speed\":", ","); 
+			double wsNum = Double.parseDouble(wsStr); 
 			double flNum = Double.parseDouble(getValue(json, "\"feels_like\":", ","));
 			double temp = Double.parseDouble(getValue(json, "\"temp\":", ","));
 			double hum = Double.parseDouble(getValue(json, "\"humidity\":", ","));
@@ -45,7 +51,7 @@ public class WeatherGet {
 			result.pressure = (int) pre + "hPa";
 			result.feelsLike = Math.round(flNum) + "°C";		
 			result.windSpeedNum = wsNum; 
-	        result.feelsLikeNum = flNum; 
+			result.feelsLikeNum = flNum; 
 			
 			if (pre < 1003) {
 				result.alert = "⚠️ 気象病警報";
@@ -60,6 +66,13 @@ public class WeatherGet {
 			result.weather = translate(getValue(json, "\"main\":\"", "\""));
 		} catch (Exception e) {
 			result.alert = "取得エラー";
+			result.weather = "データなし ☁️";
+			result.temp = "--°C";
+			result.high = "--°C";
+			result.low = "--°C";
+			result.humidity = "--%";
+			result.pressure = "--hPa";
+			result.alertColor = "#cbd5e0";
 		}
 		return result;
 	}
@@ -76,7 +89,6 @@ public class WeatherGet {
 		List<ForecastResult> list = new ArrayList<>();
 		try {
 			String json = fetchJson("forecast", city);
-			// ★ここを修正： \\{\"dt\": ではなく \"dt\": で分割する
 			String[] blocks = json.split("\"dt\":");
 
 			int count = 0;
@@ -104,7 +116,7 @@ public class WeatherGet {
 				count++;
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			// フリーズ防止のため、失敗時は空のリストを安全に返す
 		}
 		return list;
 	}
@@ -112,9 +124,14 @@ public class WeatherGet {
 	private String fetchJson(String type, String city) throws Exception {
 		String url = "https://api.openweathermap.org/data/2.5/" + type + "?q=" + city + "&appid=" + apiKey
 				+ "&units=metric&lang=ja";
-		return HttpClient.newHttpClient()
-				.send(HttpRequest.newBuilder().uri(URI.create(url)).build(), HttpResponse.BodyHandlers.ofString())
-				.body();
+		
+		// ⚠️【修正】通信タイムアウト（5秒）を設定して無限フリーズを完全に防止
+		HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create(url))
+				.timeout(Duration.ofSeconds(5))
+				.build();
+				
+		return httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body();
 	}
 
 	private String getValue(String json, String key, String end) {
@@ -126,23 +143,22 @@ public class WeatherGet {
 		if (last == -1)
 			last = json.indexOf("}", start);
 		String val = json.substring(start, last);
-		// 文字列（mainなど）を取得する時のために、replaceAllの範囲を数値用に限定する工夫が必要です
 		if (key.contains("main"))
 			return val.replace("\"", "");
 		return val.replaceAll("[^0-9.-]", "");
 	}
 
 	private String translate(String en) {
-	    if (en.contains("Clear")) return "晴れ ☀️";
-	    if (en.contains("Clouds")) return "くもり ☁️";
-	    if (en.contains("Thunderstorm")) return "雷雨 ⚡";
-	    if (en.contains("Drizzle")) return "小雨 🌦️";
-	    if (en.contains("Rain")) return "雨 ☔";
-	    if (en.contains("Snow")) return "雪 ❄️";
-	    if (en.contains("Mist") || en.contains("Fog") || en.contains("Haze")) return "霧・霞 🌫️";
-	    if (en.contains("Squall")) return "突風 🌪️";
-	    if (en.contains("Smoke") || en.contains("Dust") || en.contains("Sand")) return "視界不良 🌫️";
-	    return en; 
+		if (en.contains("Clear")) return "晴れ ☀️";
+		if (en.contains("Clouds")) return "くもり ☁️";
+		if (en.contains("Thunderstorm")) return "雷雨 ⚡";
+		if (en.contains("Drizzle")) return "小雨 🌦️";
+		if (en.contains("Rain")) return "雨 ☔";
+		if (en.contains("Snow")) return "雪 ❄️";
+		if (en.contains("Mist") || en.contains("Fog") || en.contains("Haze")) return "霧・霞 🌫️";
+		if (en.contains("Squall")) return "突風 🌪️";
+		if (en.contains("Smoke") || en.contains("Dust") || en.contains("Sand")) return "視界不良 🌫️";
+		return en; 
 	}
 
 	public String convertCityName(String input) {
