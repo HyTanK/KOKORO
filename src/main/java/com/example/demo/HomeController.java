@@ -38,12 +38,11 @@ public class HomeController {
 	@GetMapping("/nfc")
 	public String handleNfc(
 			@RequestParam(value = "role", required = false) String role,
-			HttpSession session) { // HttpSessionをインジェクション
+			HttpSession session) {
 
 		if ("user".equals(role)) {
-			// NFCタグから正しくアクセスされた証拠として、セッションにフラグを保存
 			session.setAttribute("nfc_authenticated", true);
-			return "redirect:/user"; // URLパラメータから key=nfc_success を削除（隠蔽）
+			return "redirect:/user";
 		}
 		if ("admin".equals(role)) {
 			return "redirect:/admin";
@@ -52,84 +51,109 @@ public class HomeController {
 	}
 
 	// --- 3. 管理者画面表示 ---
-		@GetMapping("/admin")
-		public String admin(Model model) {
-			model.addAttribute("spotList", spotService.getAllSpots());
-			return "admin";
+	@GetMapping("/admin")
+	public String admin(Model model) {
+		model.addAttribute("spotList", spotService.getAllSpots());
+		return "admin";
+	}
+
+	// --- 4. 利用者ダッシュボード表示（バグ・クラッシュ完全対策版） ---
+	@GetMapping("/user")
+	public String user(
+			@RequestParam(value = "city", required = false) String city,
+			@RequestParam(value = "sign", required = false) String sign,
+			HttpSession session,
+			Model model) {
+
+		// セッションチェック
+		Boolean isAuthenticated = (Boolean) session.getAttribute("nfc_authenticated");
+		if (isAuthenticated == null || !isAuthenticated) {
+			return "redirect:/";
 		}
 
-		// --- 4. 利用者ダッシュボード表示（直リンク防止・DBアクセス最適化） ---
-		@GetMapping("/user")
-		public String user(
-				@RequestParam(value = "city", required = false) String city,
-				@RequestParam(value = "sign", required = false) String sign,
-				HttpSession session, // HttpSessionをインジェクション
-				Model model) {
+		// ⚠️【修正】リロードや通信遅延時にトップへ強制リダイレクトされるバグを防ぐため削除処理を無効化
+		// session.removeAttribute("nfc_authenticated");
 
-			// セッションチェック：NFC経由フラグがなければトップへ強制リダイレクト
-			Boolean isAuthenticated = (Boolean) session.getAttribute("nfc_authenticated");
-			if (isAuthenticated == null || !isAuthenticated) {
-				return "redirect:/";
-			}
+		// DBアクセスの最適化
+		List<Spot> allSpots = spotService.getAllSpots();
 
-			// 【重要】一度画面を表示したらセッションフラグを即座に削除（リロードや直リンクでの再進入を防止）
-			session.removeAttribute("nfc_authenticated");
-
-			// DBアクセスの最適化：すべてのスポット情報を一度だけ取得して使い回す
-			List<Spot> allSpots = spotService.getAllSpots();
-
-			// 設定の取得
-			Spot config = allSpots.stream()
+		// 設定の取得
+		Spot config = null;
+		if (allSpots != null) {
+			config = allSpots.stream()
 					.filter(s -> "user_config".equals(s.getCategory()))
 					.findFirst()
 					.orElse(null);
+		}
 
-			String fullAddress = (city != null && !city.isEmpty()) ? city
-					: (config != null ? config.getAddress() : "大阪府大阪市");
-			String displaySign = (sign != null && !sign.isEmpty()) ? sign
-					: (config != null ? config.getDescription() : "牡羊座");
+		// ⚠️【修正】NullPointerException（データ未登録によるクラッシュ）を完全に防ぐ安全な変数割り当て
+		String fullAddress = "大阪府大阪市";
+		if (city != null && !city.isEmpty()) {
+			fullAddress = city;
+		} else if (config != null && config.getAddress() != null && !config.getAddress().isEmpty()) {
+			fullAddress = config.getAddress();
+		}
 
-			// 住所の分割ロジック（※既存ロジックを維持）
-			String prefPart = "", cityPart = fullAddress;
-			int idx = fullAddress.indexOf("県");
-			if (idx == -1) idx = fullAddress.indexOf("府");
-			if (idx == -1) idx = fullAddress.indexOf("都");
-			if (idx == -1) idx = fullAddress.indexOf("道");
-			if (idx != -1) {
-				prefPart = fullAddress.substring(0, idx + 1);
-				cityPart = fullAddress.substring(idx + 1);
-			}
-			if (!cityPart.endsWith("市") && !cityPart.endsWith("区") && !cityPart.endsWith("町") && !cityPart.endsWith("村")) {
-				cityPart += "市";
-			}
+		String displaySign = "牡羊座";
+		if (sign != null && !sign.isEmpty()) {
+			displaySign = sign;
+		} else if (config != null && config.getDescription() != null && !config.getDescription().isEmpty()) {
+			displaySign = config.getDescription();
+		}
 
-			// データの詰め込み
-			model.addAttribute("musicList", allSpots.stream().filter(s -> "music_config".equals(s.getCategory())).toList());
-			model.addAttribute("savedPref", prefPart);
-			model.addAttribute("savedCity", cityPart);
-			model.addAttribute("selectedSign", displaySign);
+		// 住所の分割ロジック
+		String prefPart = "", cityPart = fullAddress;
+		int idx = fullAddress.indexOf("県");
+		if (idx == -1)
+			idx = fullAddress.indexOf("府");
+		if (idx == -1)
+			idx = fullAddress.indexOf("都");
+		if (idx == -1)
+			idx = fullAddress.indexOf("道");
+		if (idx != -1) {
+			prefPart = fullAddress.substring(0, idx + 1);
+			cityPart = fullAddress.substring(idx + 1);
+		}
+		if (!cityPart.endsWith("市") && !cityPart.endsWith("区") && !cityPart.endsWith("町") && !cityPart.endsWith("村")) {
+			cityPart += "市";
+		}
 
-			String cityEn = weatherGet.convertCityName(cityPart);
-			model.addAttribute("weather", weatherGet.getLiveWeather(cityEn));
-			model.addAttribute("weeklyWeather", weatherGet.getWeeklyWeather(cityEn));
-			model.addAttribute("hourlyWeather", weatherGet.getHourlyWeather(cityEn));
-			model.addAttribute("fortune", fortuneApiClient.fetchFortune(displaySign));
+		// データの詰め込み
+		if (allSpots != null) {
+			model.addAttribute("musicList",
+					allSpots.stream().filter(s -> "music_config".equals(s.getCategory())).toList());
 			model.addAttribute("spotList", allSpots);
-
-			try {
-				model.addAttribute("newsList", newsApiClient.fetchNewsItems());
-			} catch (Exception e) {
-				// ニュース取得失敗時は無視
-			}
-
-			return "user";
+		} else {
+			model.addAttribute("musicList", java.util.Collections.emptyList());
+			model.addAttribute("spotList", java.util.Collections.emptyList());
 		}
-		
-		// --- 5. AIチャットAPI ---
-		@PostMapping("/api/chat")
-		@ResponseBody
-		public Map<String, String> chat(@RequestBody Map<String, String> request) {
-		    String reply = chatService.getAiResponse(request);
-		    return Map.of("reply", reply);
+
+		model.addAttribute("savedPref", prefPart);
+		model.addAttribute("savedCity", cityPart);
+		model.addAttribute("selectedSign", displaySign);
+
+		// 外部API呼び出し
+		String cityEn = weatherGet.convertCityName(cityPart);
+		model.addAttribute("weather", weatherGet.getLiveWeather(cityEn));
+		model.addAttribute("weeklyWeather", weatherGet.getWeeklyWeather(cityEn));
+		model.addAttribute("hourlyWeather", weatherGet.getHourlyWeather(cityEn));
+		model.addAttribute("fortune", fortuneApiClient.fetchFortune(displaySign));
+
+		try {
+			model.addAttribute("newsList", newsApiClient.fetchNewsItems());
+		} catch (Exception e) {
+			// ⚠️【修正】通信エラー発生時も空のリストを確実に補填し、HTML側の描画停止（無限ループ）を完全防止
+			model.addAttribute("newsList", java.util.Collections.emptyList());
 		}
+
+		return "user";
 	}
+
+	// --- 5. AIチャットAPI ---
+	@PostMapping("/api/chat")
+	@ResponseBody
+	public Map<String, String> chat(@RequestBody Map<String, String> request) {
+		String reply = chatService.getAiResponse(request);
+		return Map.of("reply", reply);
+	}
+}
