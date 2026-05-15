@@ -14,60 +14,55 @@ import org.springframework.stereotype.Service;
 public class ChatService {
 	public String getAiResponse(Map<String, String> data) {
 
-		// ⚠️【追加】Render（本番）環境でのフリーズを完全に防止する安全装置
-		// サーバー環境（PORT環境変数があるか）をチェックし、Render上ならAI通信を即座にスキップします
-		if (System.getenv("PORT") != null) {
-			return "本番環境（Render）からはPCのAIに接続できないよ。ローカル環境で試してみてね。";
+		// Renderの環境変数からAPIキーを読み取る
+		String apiKey = System.getenv("GEMINI_API_KEY");
+
+		// APIキーがない場合は警告（ローカル実行時など）
+		if (apiKey == null || apiKey.isEmpty()) {
+			return "APIキーが設定されていないよ。RenderのEnvironment設定を確認してね。";
 		}
 
 		try {
-			// ★URLを定義
-			String ollamaUrl = "http://localhost:11434/api/generate";
+			// Google Gemini API のURL
+			String apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key="
+					+ apiKey;
 
 			String userMessage = data.get("message");
 			String promptText = """
 					あなたは『くらし救急箱』のガイド、kokoroです。
-
-					【今のあなたの状況】
-					・現在日時：%s
-					・場所：%s ／ 天気：%s
-					・明日の予報：%s
-					・今日の占い：%s（アイテム：%s）
-					・最新ニュース：%s
-
+					【今の状況】現在日時：%s、場所：%s、天気：%s、占い：%s、ニュース：%s
 					【ルール】
 					1. おっとりした優しい日本語（タメ口）で話す。
-					2. ユーザーの言葉に反応しつつ、上記の中から「今、話すと良さそうなこと」を1つ選んで自然に触れてね。
-					3. 日本語のみで2〜3文。英語は絶対禁止。
-
+					2. ユーザーの言葉に反応しつつ、状況から1つ話題を選んで触れる。
+					3. 日本語のみで2〜3文。英語禁止。
 					ユーザー：%s
 					kokoro：""".formatted(
 					data.get("dateTime"), data.get("city"), data.get("weather"),
-					data.get("tomorrow"), data.get("fortune"), data.get("luckyItem"),
-					data.get("news"), userMessage);
+					data.get("fortune"), data.get("news"), userMessage);
 
+			// Gemini用のJSON形式に整形
 			String jsonPayload = """
 					{
-					  "model": "llama3",
-					  "prompt": %s,
-					  "stream": false
+					  "contents": [{
+					    "parts":[{"text": %s}]
+					  }]
 					}
 					""".formatted(quoteJson(promptText));
 
 			HttpClient client = HttpClient.newBuilder()
-					.connectTimeout(Duration.ofSeconds(5)) // タイムアウトを10秒から5秒に縮めて安全に
+					.connectTimeout(Duration.ofSeconds(10))
 					.build();
 
 			HttpRequest req = HttpRequest.newBuilder()
-					.uri(URI.create(ollamaUrl))
+					.uri(URI.create(apiUrl))
 					.header("Content-Type", "application/json")
-					.timeout(Duration.ofSeconds(10)) // タイムアウトを60秒から10秒に縮めてフリーズ防止
 					.POST(HttpRequest.BodyPublishers.ofString(jsonPayload, StandardCharsets.UTF_8))
 					.build();
 
-			System.out.println("AIに送信中...");
 			HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
-			return parseResponse(resp.body());
+
+			// 応答の解析（簡易版）
+			return parseGeminiResponse(resp.body());
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -78,33 +73,21 @@ public class ChatService {
 	private String quoteJson(String text) {
 		if (text == null)
 			return "\"\"";
-		return "\"" + text.replace("\\", "\\\\")
-				.replace("\"", "\\\"")
-				.replace("\n", "\\n")
-				.replace("\r", "\\r") + "\"";
+		return "\"" + text.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n") + "\"";
 	}
 
-	private String parseResponse(String body) {
+	private String parseGeminiResponse(String body) {
 		try {
-			String key = "\"response\":\"";
+			// Geminiのレスポンス構造からテキスト部分を抽出
+			String key = "\"text\": \"";
 			int start = body.indexOf(key);
 			if (start == -1)
-				return "言葉が見つからないよ。";
+				return "ちょっと考えがまとまらなかったよ。";
 			start += key.length();
-
-			int end = body.indexOf("\",\"", start);
-			if (end == -1)
-				end = body.indexOf("\"", start);
-
-			if (start < end) {
-				return body.substring(start, end)
-						.replace("\\n", "\n")
-						.replace("\\\"", "\"")
-						.replace("\\\\", "\\");
-			}
+			int end = body.indexOf("\"", start);
+			return body.substring(start, end).replace("\\n", "\n").replace("\\\"", "\"");
 		} catch (Exception e) {
-			System.err.println("パースエラー: " + e.getMessage());
+			return "言葉が見つからないよ。";
 		}
-		return "ちょっと考えがまとまらなかったよ。";
 	}
 }
