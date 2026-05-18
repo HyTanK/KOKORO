@@ -60,14 +60,23 @@
 		<a th:href="@{/nfc?role=user}" class="welcome-btn" onclick="return playDoubleWink(event, this)">ようこそ</a>
 		<a th:href="@{/nfc?role=admin}" class="admin-link"></a>
 	</div>
+	<!-- index.html の該当する <script> 部分を以下に書き換えてください -->
 	<script th:inline="javascript">
 		function playDoubleWink(event, element) {
 			event.preventDefault();
 			var img = document.getElementById('charaImg');
+
+			// ⭕ エディタにエラーを出さない最も安全なThymeleafインラインの書き方
 			var normalImg = /*[[@{/images/kokoro.png}]]*/ '/images/kokoro.png';
 			var winkImg = /*[[@{/images/wink.png}]]*/ '/images/wink.png';
+
 			img.src = winkImg;
-			setTimeout(function () {img.src = normalImg; setTimeout(function () {window.location.href = element.href;}, 300);}, 400);
+			setTimeout(function () {
+				img.src = normalImg;
+				setTimeout(function () {
+					window.location.href = element.href;
+				}, 300);
+			}, 400);
 			return false;
 		}
 	</script>

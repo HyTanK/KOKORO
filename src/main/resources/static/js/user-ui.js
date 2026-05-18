@@ -63,62 +63,68 @@ function toggleChatInline() {
 }
 
 async function sendChatMessage() {
-    const input = document.getElementById('chatInput');
-    const message = input.value.trim();
-    if (!message) return;
+	const input = document.getElementById('chatInput');
+	if (!input) return;
+	const message = input.value.trim();
+	if (!message) return;
 
-    // --- 【追加】情報の取得ロジック ---
-    
-    // 1. 今日の方位・曜日・時間
-    const now = new Date();
-    const days = ['日', '月', '火', '水', '木', '金', '土'];
-    const timeInfo = `${now.getMonth() + 1}/${now.getDate()}(${days[now.getDay()]}) ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+	// ⭕ 1. 修正：サーバーに依存せず、スマホやPCの日本時間を正しく取得する
+	const now = new Date();
+	const days = ['日', '月', '火', '水', '木', '金', '土'];
+	const timeInfo = `${now.getMonth() + 1}/${now.getDate()}(${days[now.getDay()]}) ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-    // 2. ラッキーアイテム (占いセクションの最後の方のテキスト)
-    const itemText = document.querySelector('.fortune-box p[style*="color:#ff9800"]')?.innerText || "なし";
-    const luckyItem = itemText.replace('🍀 アイテム: ', '');
+	// 2. ラッキーアイテム (安全に取得)
+	const itemText = document.querySelector('.fortune-box p[style*="color:#ff9800"]')?.innerText || "なし";
+	const luckyItem = itemText.replace('🍀 アイテム: ', '');
 
-    // 3. 明日の天気 (週間予報の2番目の要素を取得)
-    const tomorrowWeatherEl = document.querySelectorAll('.info-card div[th\\:each]')[1];
-    const tomorrowInfo = tomorrowWeatherEl ? tomorrowWeatherEl.innerText.replace(/\n/g, ' ') : "不明";
+	// ⭕ 3. 修正：th\\:eachを廃止し、クラス名や要素の順番から安全に取得する
+	// info-cardの中にある予報要素（div）から2番目（明日のデータ）を取得
+	const tomorrowWeatherEl = document.querySelectorAll('.info-card div')[1];
+	const tomorrowInfo = tomorrowWeatherEl ? tomorrowWeatherEl.innerText.replace(/\n/g, ' ') : "不明";
 
-    // 4. ニュースの最新3件
-    const newsEls = document.querySelectorAll('.info-card ul li a');
-    const newsHeadlines = Array.from(newsEls).slice(0, 3).map(el => el.innerText).join('／');
+	// 4. ニュースの最新3件 (安全に取得)
+	const newsEls = document.querySelectorAll('.info-card ul li a');
+	const newsHeadlines = newsEls.length > 0 ? Array.from(newsEls).slice(0, 3).map(el => el.innerText).join('／') : "なし";
 
-    // --------------------------------
+	// --------------------------------
 
-    addMessage("user", message);
-    input.value = "";
-    const loadingId = addMessage("kokoro", "考え中...");
+	addMessage("user", message);
+	input.value = "";
+	const loadingId = addMessage("kokoro", "考え中...");
 
-    try {
-        const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                message: message,
-                city: document.querySelector('.weather-header h2 span')?.innerText || "設定地域",
-                weather: document.querySelector('.weather-main-temp')?.innerText || "",
-                fortune: document.querySelector('.fortune-box p')?.innerText || "",
-                luckyItem: luckyItem,    
-                tomorrow: tomorrowInfo, 
-                news: newsHeadlines, 
-                dateTime: timeInfo 
-            })
-        });
-        const data = await response.json();
+	try {
+		const response = await fetch('/api/chat', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				message: message,
+				city: document.querySelector('.weather-header h2 span')?.innerText || "設定地域",
+				weather: document.querySelector('.weather-main-temp')?.innerText || "",
+				fortune: document.querySelector('.fortune-box p')?.innerText || "",
+				luckyItem: luckyItem,
+				tomorrow: tomorrowInfo,
+				news: newsHeadlines,
+				dateTime: timeInfo
+			})
+		});
 
-        const loadingElement = document.getElementById(loadingId);
-        if (loadingElement) {
-            loadingElement.closest('.chat-wrapper').remove();
-        }
-        addMessage("kokoro", data.reply);
+		if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+		const data = await response.json();
 
-    } catch (e) {
-        const loadingElement = document.getElementById(loadingId);
-        if (loadingElement) loadingElement.innerText = "ごめんね、うまく繋がらなかったみたい。";
-    }
+		const loadingElement = document.getElementById(loadingId);
+		if (loadingElement) {
+			loadingElement.closest('.chat-wrapper').remove();
+		}
+		// 「reply」キーでメッセージを表示
+		addMessage("kokoro", data.reply || "言葉が見つからないよ。");
+
+	} catch (e) {
+		console.error("Chat Error:", e);
+		const loadingElement = document.getElementById(loadingId);
+		if (loadingElement) {
+			loadingElement.innerText = "ごめんね、うまく繋がらなかったみたい。";
+		}
+	}
 }
 
 function addMessage(sender, text) {
